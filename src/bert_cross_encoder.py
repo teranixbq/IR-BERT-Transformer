@@ -13,7 +13,7 @@ from tqdm import tqdm
 from transformers import (
     AutoModelForSequenceClassification,
     AutoTokenizer,
-    get_linear_schedule_with_warmup,
+    AdamW,
 )
 
 
@@ -88,14 +88,29 @@ class BERTCrossEncoder:
         )
         return ranked_indices, scores
 
-    def train(
-        self, train_df: pd.DataFrame, val_df=None, epochs=3, batch_size=16, lr=2e-5
-    ):
-        """TODO: Implement full training loop (pairwise / classification)"""
-        print(
-            "🔧 Training function - silakan implementasikan full training loop di sini"
+    def train(self, train_df: pd.DataFrame, val_df=None, epochs=3, batch_size=16, lr=2e-5) -> None:
+        dataset = CrossEncoderDataset(
+            train_df["query"].tolist(), train_df["passage"].tolist(),
+            train_df["label"].tolist(), self.tokenizer,
         )
-        pass
+        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
+        optimizer = AdamW(self.model.parameters(), lr=lr)
+        loss_fn = torch.nn.BCEWithLogitsLoss()
+
+        self.model.train()
+        for epoch in range(epochs):
+            total_loss = 0
+            for batch in dataloader:
+                input_ids = batch["input_ids"].to(self.device)
+                attention_mask = batch["attention_mask"].to(self.device)
+                labels = batch["labels"].float().to(self.device)
+                outputs = self.model(input_ids, attention_mask=attention_mask)
+                loss = loss_fn(outputs.logits.squeeze(-1), labels)
+                loss.backward()
+                optimizer.step()
+                optimizer.zero_grad()
+                total_loss += loss.item()
+            print(f"Epoch {epoch+1}/{epochs} — avg loss: {total_loss/len(dataloader):.4f}")
 
 
 # ====================== CONTOH PENGGUNAAN ======================
