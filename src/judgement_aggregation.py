@@ -31,19 +31,21 @@ def compute_annotator_reliability(df):
 
 def advanced_aggregation(group, strategy='confidence_weighted', annotator_reliability=None):
     judgements = group['judgement'].astype(float)
-    confidences = group['confidence'].astype(float)
 
-    if strategy == 'confidence_weighted':
-        # Point 1: Weighted voting berdasarkan confidence annotator
-        final_score = np.average(judgements, weights=confidences)
-
-    elif strategy == 'annotator_reliability' and annotator_reliability is not None:
-        # Point 3: Weighted voting berdasarkan reliability annotator
-        weights = group['annotator_id'].map(annotator_reliability).fillna(0.5)
-        final_score = np.average(judgements, weights=weights)
-
+    # Gate: disagreement tinggi → median (safety net)
+    if len(judgements) >= 3 and judgements.std() > 1.0:
+        final_score = judgements.median()
     else:
-        final_score = judgements.mean()
+        confidences = group['confidence'].astype(float)
+        if strategy == 'confidence_weighted':
+            # Point 1: Weighted voting berdasarkan confidence annotator
+            final_score = np.average(judgements, weights=confidences)
+        elif strategy == 'annotator_reliability' and annotator_reliability is not None:
+            # Point 2: Weighted voting berdasarkan reliability annotator
+            weights = group['annotator_id'].map(annotator_reliability).fillna(0.5)
+            final_score = np.average(judgements, weights=weights)
+        else:
+            final_score = judgements.mean()
 
     return round(final_score)
 
