@@ -96,8 +96,10 @@ if __name__ == "__main__":
     print(f"\nAnnotator Reliability: {reliability}")
     agg_reliability = aggregate_judgements(df, method='advanced', strategy='annotator_reliability', annotator_reliability=reliability)
     
-    # Simpan qrels dari strategi confidence_weighted (default)
-    save_qrels(agg_weighted, "data/fira_aggregated.qrels")
+    # Simpan qrels dari setiap strategi
+    save_qrels(agg_maj, "data/fira_aggregated.qrels")
+    save_qrels(agg_weighted, "data/fira_aggregated_confidence_weighted.qrels")
+    save_qrels(agg_reliability, "data/fira_aggregated_annotator_reliability.qrels")
     
     print("\n=== PERBANDINGAN BASELINE (MAJORITY) VS ADVANCED ===")
     print(f"{'Method':<30} {'Score Dist':<30} {'Mean Std Score':<15}")
