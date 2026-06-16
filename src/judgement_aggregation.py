@@ -51,12 +51,12 @@ def advanced_aggregation(
     else:
         confidences = group["confidence"].astype(float)
         if strategy == "confidence_weighted":
-            # Point 1: Weighted voting berdasarkan confidence annotator
             final_score = np.average(judgements, weights=confidences)
+
         elif strategy == "annotator_reliability" and annotator_reliability is not None:
-            # Point 2: Weighted voting berdasarkan reliability annotator
             weights = group["annotator_id"].map(annotator_reliability).fillna(0.5)
             final_score = np.average(judgements, weights=weights)
+
         else:
             final_score = judgements.mean()
 
