@@ -10,10 +10,10 @@ import pandas as pd
 import torch
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
+from torch.optim import Adam
 from transformers import (
     AutoModelForSequenceClassification,
     AutoTokenizer,
-    AdamW,
 )
 
 
@@ -94,7 +94,7 @@ class BERTCrossEncoder:
             train_df["label"].tolist(), self.tokenizer,
         )
         dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
-        optimizer = AdamW(self.model.parameters(), lr=lr)
+        optimizer = Adam(self.model.parameters(), lr=lr)
         loss_fn = torch.nn.BCEWithLogitsLoss()
 
         self.model.train()
