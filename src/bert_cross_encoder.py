@@ -8,9 +8,9 @@ import os
 
 import pandas as pd
 import torch
+from torch.optim import Adam
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
-from torch.optim import Adam
 from transformers import (
     AutoModelForSequenceClassification,
     AutoTokenizer,
@@ -70,10 +70,12 @@ class BERTCrossEncoder:
             )
         return score
 
-    def re_rank(self, query: str, passages: list, batch_size=32):
+    def re_rank(self, query: str, passages: list, batch_size=32, verbose=True):
         """Re-rank list of passages untuk satu query"""
         scores = []
-        for i in tqdm(range(0, len(passages), batch_size), desc="Re-ranking"):
+        for i in tqdm(
+            range(0, len(passages), batch_size), desc="Re-ranking", disable=not verbose
+        ):
             batch_queries = [query] * min(batch_size, len(passages) - i)
             batch_passages = passages[i : i + batch_size]
 
@@ -88,10 +90,14 @@ class BERTCrossEncoder:
         )
         return ranked_indices, scores
 
-    def train(self, train_df: pd.DataFrame, val_df=None, epochs=3, batch_size=16, lr=2e-5) -> None:
+    def train(
+        self, train_df: pd.DataFrame, val_df=None, epochs=3, batch_size=16, lr=2e-5
+    ) -> None:
         dataset = CrossEncoderDataset(
-            train_df["query"].tolist(), train_df["passage"].tolist(),
-            train_df["label"].tolist(), self.tokenizer,
+            train_df["query"].tolist(),
+            train_df["passage"].tolist(),
+            train_df["label"].tolist(),
+            self.tokenizer,
         )
         dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
         optimizer = Adam(self.model.parameters(), lr=lr)
@@ -110,7 +116,9 @@ class BERTCrossEncoder:
                 optimizer.step()
                 optimizer.zero_grad()
                 total_loss += loss.item()
-            print(f"Epoch {epoch+1}/{epochs} — avg loss: {total_loss/len(dataloader):.4f}")
+            print(
+                f"Epoch {epoch + 1}/{epochs} — avg loss: {total_loss / len(dataloader):.4f}"
+            )
 
 
 # ====================== CONTOH PENGGUNAAN ======================
