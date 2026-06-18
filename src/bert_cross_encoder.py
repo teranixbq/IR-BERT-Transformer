@@ -117,7 +117,7 @@ class BERTCrossEncoder:
             for batch in tqdm(train_loader, desc=f"Epoch {epoch+1}/{epochs}"):
                 input_ids = batch["input_ids"].to(self.device)
                 attention_mask = batch["attention_mask"].to(self.device)
-                labels = batch["labels"].to(self.device)
+                labels = batch["labels"].float().to(self.device)
 
                 optimizer.zero_grad()
                 outputs = self.model(
