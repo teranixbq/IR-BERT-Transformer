@@ -1,7 +1,7 @@
 """
 FiRA Judgement Aggregation Starter Code
 Dosen: Zico Pratama Putra
-Kelompok: [Isi nama anggota kelompok]
+Kelompok: [14250028 - Hanief Fathul Bahri Ahmad],[14250029 - Irfan Wibowo],[14250027 - Muhammad Arief Nadhofa]
 """
 
 import json

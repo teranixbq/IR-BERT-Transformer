@@ -1,7 +1,7 @@
 """
 BERT Cross-Encoder for Neural Re-Ranking
 Dosen: Zico Pratama Putra
-Kelompok: [Nama Anggota 1, Anggota 2, Anggota 3]
+Kelompok: [14250028 - Hanief Fathul Bahri Ahmad],[14250029 - Irfan Wibowo],[14250027 - Muhammad Arief Nadhofa]
 """
 
 import os
