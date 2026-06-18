@@ -8,7 +8,6 @@ import os
 
 import pandas as pd
 import torch
-from torch.optim import Adam
 from torch.utils.data import DataLoader, Dataset
 from tqdm import tqdm
 from transformers import (
@@ -91,34 +90,49 @@ class BERTCrossEncoder:
         return ranked_indices, scores
 
     def train(
-        self, train_df: pd.DataFrame, val_df=None, epochs=3, batch_size=16, lr=2e-5
-    ) -> None:
-        dataset = CrossEncoderDataset(
-            train_df["query"].tolist(),
-            train_df["passage"].tolist(),
-            train_df["label"].tolist(),
-            self.tokenizer,
+        self,
+        train_df: pd.DataFrame,
+        val_df=None,
+        epochs=2,
+        batch_size=8,
+        lr=2e-5,
+        max_length=256
+    ):
+        train_dataset = CrossEncoderDataset(
+            queries=train_df["query"].tolist(),
+            passages=train_df["passage"].tolist(),
+            labels=train_df["label"].tolist(),
+            tokenizer=self.tokenizer,
+            max_length=max_length
         )
-        dataloader = DataLoader(dataset, batch_size=batch_size, shuffle=True)
-        optimizer = Adam(self.model.parameters(), lr=lr)
-        loss_fn = torch.nn.BCEWithLogitsLoss()
 
-        self.model.train()
+        train_loader = DataLoader(train_dataset, batch_size=batch_size, shuffle=True)
+
+        optimizer = torch.optim.AdamW(self.model.parameters(), lr=lr)
+
         for epoch in range(epochs):
-            total_loss = 0
-            for batch in dataloader:
+            self.model.train()
+            total_loss = 0.0
+
+            for batch in tqdm(train_loader, desc=f"Epoch {epoch+1}/{epochs}"):
                 input_ids = batch["input_ids"].to(self.device)
                 attention_mask = batch["attention_mask"].to(self.device)
-                labels = batch["labels"].float().to(self.device)
-                outputs = self.model(input_ids, attention_mask=attention_mask)
-                loss = loss_fn(outputs.logits.squeeze(-1), labels)
-                loss.backward()
-                optimizer.step()
+                labels = batch["labels"].to(self.device)
+
                 optimizer.zero_grad()
+                outputs = self.model(
+                    input_ids=input_ids, attention_mask=attention_mask, labels=labels
+                )
+                loss = outputs.loss
+                loss.backward()
+
+                torch.nn.utils.clip_grad_norm_(self.model.parameters(), max_norm=1.0)
+
+                optimizer.step()
                 total_loss += loss.item()
-            print(
-                f"Epoch {epoch + 1}/{epochs} — avg loss: {total_loss / len(dataloader):.4f}"
-            )
+
+            avg_loss = total_loss / len(train_loader)
+            print(f"Epoch {epoch+1}/{epochs} - Loss: {avg_loss:.4f}")
 
 
 # ====================== CONTOH PENGGUNAAN ======================
